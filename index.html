@@ -384,6 +384,22 @@
     accent-color:var(--gold);
     cursor:pointer;
   }
+  .group-toggle{ display:flex; gap:6px; }
+  .group-toggle button{
+    flex:1;
+    padding:8px 6px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+    font-size:11.5px;
+    cursor:pointer;
+    border-radius:3px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .group-toggle button.active{ background:var(--gold); color:#fff; border-color:var(--gold); }
+
   .type-toggle{ display:flex; gap:6px; }
   .type-toggle button{
     flex:1;
@@ -500,6 +516,14 @@
           <div class="field" id="installmentsWrap" style="display:none;">
             <label>Nº de parcelas</label>
             <input type="number" id="fInstallments" min="2" max="60" value="2">
+          </div>
+          <div class="field" style="min-width:230px;">
+            <label>Quinzena (a qual pagamento pertence)</label>
+            <div class="group-toggle" id="groupToggle">
+              <button type="button" data-group="" class="active">Nenhuma</button>
+              <button type="button" data-group="5">5º dia útil</button>
+              <button type="button" data-group="20">Dia 20</button>
+            </div>
           </div>
           <div class="field">
             <label>Tipo</label>
@@ -673,11 +697,13 @@
     return rows.map(t=>{
       const [y,m,d] = t.date.split('-');
       const badge = t.installmentTotal ? `<span class="parcel-badge">${t.installmentIndex}/${t.installmentTotal}</span>` : '';
+      const groupBadge = t.payGroup === '5' ? '<span class="cat-pill">5º dia útil</span>'
+                        : t.payGroup === '20' ? '<span class="cat-pill">Dia 20</span>' : '';
       return `
         <tr>
           <td>${d}/${m}/${y.slice(2)}</td>
           <td>${escapeHtml(t.description)}${badge}</td>
-          <td><span class="cat-pill">${escapeHtml(t.category)}</span></td>
+          <td><span class="cat-pill">${escapeHtml(t.category)}</span> ${selectedMonth === 'all' ? groupBadge : ''}</td>
           <td class="num ${t.type}">${t.type==='in' ? '+' : '−'} ${brl.format(t.amount)}</td>
           <td><button class="del-btn" data-id="${t.id}" title="Excluir">✕</button></td>
         </tr>`;
@@ -725,27 +751,40 @@
     const fifthLabel = formatDDMM(fifthDay, monthIndex);
     const twentiethLabel = formatDDMM(SPLIT_DAY, monthIndex);
 
-    const period1 = list.filter(t=> Number(t.date.split('-')[2]) < SPLIT_DAY)
-                         .sort((a,b)=> b.date.localeCompare(a.date));
-    const period2 = list.filter(t=> Number(t.date.split('-')[2]) >= SPLIT_DAY)
-                         .sort((a,b)=> b.date.localeCompare(a.date));
+    const group5 = list.filter(t=> t.payGroup === '5').sort((a,b)=> b.date.localeCompare(a.date));
+    const group20 = list.filter(t=> t.payGroup === '20').sort((a,b)=> b.date.localeCompare(a.date));
+    const groupNone = list.filter(t=> !t.payGroup).sort((a,b)=> b.date.localeCompare(a.date));
 
-    container.innerHTML = `
+    let html = `
       <div class="period-block">
         <div class="period-header">
-          <div><span class="ptitle">1ª quinzena</span><span class="pdate">recebimento ${fifthLabel} · 5º dia útil</span></div>
-          ${periodBalanceHtml(period1)}
+          <div><span class="ptitle">5º dia útil</span><span class="pdate">${fifthLabel}</span></div>
+          ${periodBalanceHtml(group5)}
         </div>
-        ${buildLedgerTable(period1)}
+        ${buildLedgerTable(group5)}
       </div>
       <div class="period-block">
         <div class="period-header">
-          <div><span class="ptitle">2ª quinzena</span><span class="pdate">recebimento ${twentiethLabel} · dia 20</span></div>
-          ${periodBalanceHtml(period2)}
+          <div><span class="ptitle">Dia 20</span><span class="pdate">${twentiethLabel}</span></div>
+          ${periodBalanceHtml(group20)}
         </div>
-        ${buildLedgerTable(period2)}
+        ${buildLedgerTable(group20)}
       </div>
     `;
+
+    if(groupNone.length > 0){
+      html += `
+        <div class="period-block">
+          <div class="period-header">
+            <div><span class="ptitle">Sem quinzena definida</span></div>
+            ${periodBalanceHtml(groupNone)}
+          </div>
+          ${buildLedgerTable(groupNone)}
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
     bindDeleteButtons(container);
   }
 
@@ -811,6 +850,16 @@
     });
   });
 
+  let currentGroup = '';
+  const groupButtons = document.querySelectorAll('#groupToggle button');
+  groupButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      groupButtons.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentGroup = btn.dataset.group;
+    });
+  });
+
   const installmentCheckbox = document.getElementById('fInstallment');
   const installmentsWrap = document.getElementById('installmentsWrap');
   const amountLabel = document.getElementById('amountLabel');
@@ -845,6 +894,7 @@
           category,
           date: addMonths(date, i),
           type: currentType,
+          payGroup: currentGroup || null,
           installmentGroup: groupId,
           installmentIndex: i+1,
           installmentTotal: installmentsCount
@@ -857,7 +907,8 @@
         amount: Math.round(amount*100)/100,
         category,
         date,
-        type: currentType
+        type: currentType,
+        payGroup: currentGroup || null
       });
     }
 
@@ -867,6 +918,9 @@
     typeButtons.forEach(b=>b.classList.remove('active'));
     document.querySelector('.type-toggle button[data-type="out"]').classList.add('active');
     currentType = 'out';
+    groupButtons.forEach(b=>b.classList.remove('active'));
+    document.querySelector('#groupToggle button[data-group=""]').classList.add('active');
+    currentGroup = '';
     installmentsWrap.style.display = 'none';
     amountLabel.textContent = 'Valor (R$)';
     document.getElementById('fInstallments').value = 2;
