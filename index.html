@@ -243,6 +243,38 @@
   .bar-row .amt{ font-family:'IBM Plex Mono', monospace; text-align:right; }
   .empty-note{ color:var(--ink-soft); font-size:13px; font-style:italic; }
 
+  /* período (quinzenas) */
+  .period-block{ margin-bottom:26px; }
+  .period-block:last-child{ margin-bottom:0; }
+  .period-header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:10px;
+    padding-bottom:8px;
+    border-bottom:1px dashed var(--line);
+  }
+  .period-header .ptitle{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:15px;
+    margin-right:8px;
+  }
+  .period-header .pdate{
+    font-size:11px;
+    color:var(--ink-soft);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .pbalance{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px;
+    font-weight:600;
+  }
+  .pbalance.pos{ color:var(--forest); }
+  .pbalance.neg{ color:var(--brick); }
+
   /* ledger table */
   .ledger{ width:100%; border-collapse:collapse; font-size:13.5px; }
   .ledger thead th{
@@ -490,18 +522,7 @@
 
     <section class="block">
       <h2 class="block-title">Lançamentos</h2>
-      <table class="ledger">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Descrição</th>
-            <th>Categoria</th>
-            <th style="text-align:right;">Valor</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="ledgerBody"></tbody>
-      </table>
+      <div id="ledgerContainer"></div>
     </section>
 
     <div class="backup-row">
@@ -516,6 +537,7 @@
 (function(){
   const STORAGE_KEY = 'balancete:transactions';
   const DEFAULT_CATEGORIES = ['Alimentação','Transporte','Moradia','Lazer','Saúde','Educação','Salário','Outros'];
+  const SPLIT_DAY = 20; // dia que separa a 1ª da 2ª quinzena
 
   let transactions = loadData();
   let selectedMonth = 'all'; // 'all' or 'YYYY-MM'
@@ -557,6 +579,24 @@
     const mm = String(target.getMonth()+1).padStart(2,'0');
     const dd = String(day).padStart(2,'0');
     return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // retorna o dia (número) do n-ésimo dia útil (seg-sex) de um mês
+  function nthBusinessDay(year, monthIndex, n){
+    const daysInMonth = new Date(year, monthIndex+1, 0).getDate();
+    let count = 0;
+    for(let d=1; d<=daysInMonth; d++){
+      const weekday = new Date(year, monthIndex, d).getDay();
+      if(weekday !== 0 && weekday !== 6){
+        count++;
+        if(count === n) return d;
+      }
+    }
+    return daysInMonth;
+  }
+
+  function formatDDMM(day, monthIndex){
+    return `${String(day).padStart(2,'0')}/${String(monthIndex+1).padStart(2,'0')}`;
   }
 
   function populateCategorySelect(){
@@ -629,28 +669,88 @@
     });
   }
 
-  function renderLedger(list){
-    const body = document.getElementById('ledgerBody');
-    body.innerHTML = '';
-    const sorted = [...list].sort((a,b)=> b.date.localeCompare(a.date));
-    if(sorted.length === 0){
-      body.innerHTML = '<tr><td colspan="5" class="empty-note" style="padding:16px 8px;">O balancete está em branco para este período. Registre seu primeiro lançamento acima.</td></tr>';
-      return;
-    }
-    sorted.forEach(t=>{
-      const tr = document.createElement('tr');
+  function ledgerRowsHtml(rows){
+    return rows.map(t=>{
       const [y,m,d] = t.date.split('-');
       const badge = t.installmentTotal ? `<span class="parcel-badge">${t.installmentIndex}/${t.installmentTotal}</span>` : '';
-      tr.innerHTML = `
-        <td>${d}/${m}/${y.slice(2)}</td>
-        <td>${escapeHtml(t.description)}${badge}</td>
-        <td><span class="cat-pill">${escapeHtml(t.category)}</span></td>
-        <td class="num ${t.type}">${t.type==='in' ? '+' : '−'} ${brl.format(t.amount)}</td>
-        <td><button class="del-btn" data-id="${t.id}" title="Excluir">✕</button></td>
-      `;
-      body.appendChild(tr);
-    });
-    body.querySelectorAll('.del-btn').forEach(btn=>{
+      return `
+        <tr>
+          <td>${d}/${m}/${y.slice(2)}</td>
+          <td>${escapeHtml(t.description)}${badge}</td>
+          <td><span class="cat-pill">${escapeHtml(t.category)}</span></td>
+          <td class="num ${t.type}">${t.type==='in' ? '+' : '−'} ${brl.format(t.amount)}</td>
+          <td><button class="del-btn" data-id="${t.id}" title="Excluir">✕</button></td>
+        </tr>`;
+    }).join('');
+  }
+
+  function buildLedgerTable(rows){
+    if(rows.length === 0){
+      return `<div class="empty-note" style="padding:10px 2px 4px;">Nenhum lançamento neste período.</div>`;
+    }
+    return `
+      <table class="ledger">
+        <thead>
+          <tr>
+            <th>Data</th><th>Descrição</th><th>Categoria</th>
+            <th style="text-align:right;">Valor</th><th></th>
+          </tr>
+        </thead>
+        <tbody>${ledgerRowsHtml(rows)}</tbody>
+      </table>`;
+  }
+
+  function periodBalanceHtml(rows){
+    const income = rows.filter(t=>t.type==='in').reduce((s,t)=>s+t.amount,0);
+    const expense = rows.filter(t=>t.type==='out').reduce((s,t)=>s+t.amount,0);
+    const bal = income - expense;
+    const cls = bal >= 0 ? 'pos' : 'neg';
+    return `<span class="pbalance ${cls}">${brl.format(bal)}</span>`;
+  }
+
+  function renderLedger(list){
+    const container = document.getElementById('ledgerContainer');
+
+    if(selectedMonth === 'all'){
+      const sorted = [...list].sort((a,b)=> b.date.localeCompare(a.date));
+      container.innerHTML = buildLedgerTable(sorted);
+      bindDeleteButtons(container);
+      return;
+    }
+
+    const [yStr, mStr] = selectedMonth.split('-');
+    const year = Number(yStr);
+    const monthIndex = Number(mStr) - 1;
+    const fifthDay = nthBusinessDay(year, monthIndex, 5);
+    const fifthLabel = formatDDMM(fifthDay, monthIndex);
+    const twentiethLabel = formatDDMM(SPLIT_DAY, monthIndex);
+
+    const period1 = list.filter(t=> Number(t.date.split('-')[2]) < SPLIT_DAY)
+                         .sort((a,b)=> b.date.localeCompare(a.date));
+    const period2 = list.filter(t=> Number(t.date.split('-')[2]) >= SPLIT_DAY)
+                         .sort((a,b)=> b.date.localeCompare(a.date));
+
+    container.innerHTML = `
+      <div class="period-block">
+        <div class="period-header">
+          <div><span class="ptitle">1ª quinzena</span><span class="pdate">recebimento ${fifthLabel} · 5º dia útil</span></div>
+          ${periodBalanceHtml(period1)}
+        </div>
+        ${buildLedgerTable(period1)}
+      </div>
+      <div class="period-block">
+        <div class="period-header">
+          <div><span class="ptitle">2ª quinzena</span><span class="pdate">recebimento ${twentiethLabel} · dia 20</span></div>
+          ${periodBalanceHtml(period2)}
+        </div>
+        ${buildLedgerTable(period2)}
+      </div>
+    `;
+    bindDeleteButtons(container);
+  }
+
+  function bindDeleteButtons(container){
+    container.querySelectorAll('.del-btn').forEach(btn=>{
       btn.addEventListener('click', ()=> handleDelete(btn.dataset.id));
     });
   }
