@@ -1,0 +1,50 @@
+# Balancete — controle financeiro pessoal
+
+Um livro-caixa digital simples: registre entradas e saídas, veja o saldo, o
+gasto por categoria e o histórico de lançamentos por mês. Tudo roda no
+navegador, sem servidor — os dados ficam salvos no `localStorage` do próprio
+navegador do usuário.
+
+## Como usar localmente
+
+Basta abrir o arquivo `index.html` em qualquer navegador. Não precisa de
+instalação, build ou servidor.
+
+## Como publicar no GitHub Pages
+
+1. Crie um repositório novo no GitHub (ex: `balancete`).
+2. Suba o arquivo `index.html` (e este `README.md`, se quiser) para a raiz do
+   repositório:
+   ```bash
+   git init
+   git add .
+   git commit -m "Balancete: controle financeiro pessoal"
+   git branch -M main
+   git remote add origin https://github.com/SEU_USUARIO/balancete.git
+   git push -u origin main
+   ```
+3. No GitHub, vá em **Settings → Pages**.
+4. Em "Build and deployment", selecione **Deploy from a branch**, escolha a
+   branch `main` e a pasta `/ (root)`.
+5. Salve. Em alguns minutos o site estará disponível em:
+   `https://SEU_USUARIO.github.io/balancete/`
+
+## Importante sobre os dados
+
+- Os dados ficam salvos **no navegador**, por domínio. Ou seja, se você
+  acessar o app em navegadores ou dispositivos diferentes, cada um terá seu
+  próprio histórico (não há sincronização automática).
+- Use o botão **"Exportar backup (.json)"** regularmente para guardar uma
+  cópia dos seus lançamentos, e **"Importar backup"** para restaurá-los em
+  outro navegador/dispositivo ou depois de limpar o cache.
+
+## Estrutura
+
+- `index.html` — aplicação completa (HTML + CSS + JS em um único arquivo),
+  sem dependências além de fontes do Google Fonts.
+
+## Possíveis evoluções futuras
+
+- Metas de gastos por categoria
+- Gráfico de evolução do saldo ao longo dos meses
+- Múltiplas contas/carteiras
