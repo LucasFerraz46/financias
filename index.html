@@ -1,1 +1,812 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balancete — controle financeiro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0B0D;
+    --ink:#F4F4F6;
+    --ink-70:#C7C7CC;
+    --muted:#8B8B92;
+    --line:#28282D;
+    --income:#34D399;
+    --expense:#F87171;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  html{ color-scheme:dark; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--ink); color:#fff;}
+
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+    padding:56px 24px 96px;
+  }
+
+  /* header */
+  .brand{
+    font-size:15px;
+    font-weight:800;
+    letter-spacing:.02em;
+    text-transform:uppercase;
+    margin-bottom:32px;
+  }
+
+  /* month tabs */
+  .tabs{
+    display:flex;
+    gap:22px;
+    overflow-x:auto;
+    border-bottom:1px solid var(--line);
+    -ms-overflow-style:none;
+    scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{
+    padding:0 0 12px;
+    font-size:14.5px;
+    font-weight:600;
+    color:var(--muted);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    white-space:nowrap;
+    text-transform:capitalize;
+  }
+  .tab.active{ color:var(--ink); border-color:var(--ink); }
+
+  /* hero balance */
+  .hero{ padding:40px 0 36px; border-bottom:1px solid var(--line); }
+  .hero-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .hero-value{
+    font-size:clamp(44px,8vw,66px);
+    font-weight:800;
+    letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;
+    line-height:1.05;
+  }
+  .hero-value.pos{ color:var(--income); }
+  .hero-value.neg{ color:var(--expense); }
+  .hero-stats{
+    display:flex;
+    gap:32px;
+    margin-top:20px;
+  }
+  .hero-stat .k{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    font-weight:600;
+    margin-bottom:3px;
+  }
+  .hero-stat .v{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:18px;
+    font-weight:600;
+    font-variant-numeric:tabular-nums;
+  }
+  .hero-stat.in .v{ color:var(--income); }
+  .hero-stat.out .v{ color:var(--expense); }
+
+  /* generic section */
+  .section{ padding:36px 0; border-bottom:1px solid var(--line); }
+  .section:last-of-type{ border-bottom:none; }
+  .section-title{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    font-weight:700;
+    margin-bottom:18px;
+  }
+  .empty-note{ color:var(--muted); font-size:14px; }
+
+  /* category bars */
+  .bar-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:7px 0;
+  }
+  .bar-row .cat{
+    width:118px;
+    flex-shrink:0;
+    font-size:14px;
+    color:var(--ink-70);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .bar-track{ flex:1; height:3px; background:var(--line); border-radius:2px; }
+  .bar-fill{ height:100%; background:var(--expense); border-radius:2px; opacity:.85; }
+  .bar-row .amt{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px;
+    width:92px;
+    text-align:right;
+    color:var(--ink-70);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* period (quinzenas) */
+  .period-block{ margin-bottom:28px; }
+  .period-block:last-child{ margin-bottom:0; }
+  .period-header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:10px;
+    padding-bottom:10px;
+    margin-bottom:4px;
+  }
+  .period-header .ptitle{ font-size:15.5px; font-weight:700; margin-right:8px; }
+  .period-header .pdate{ font-size:12.5px; color:var(--muted); font-family:'IBM Plex Mono', monospace; }
+  .pbalance{ font-family:'IBM Plex Mono', monospace; font-size:14.5px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .pbalance.pos{ color:var(--income); }
+  .pbalance.neg{ color:var(--expense); }
+
+  /* ledger */
+  .ledger{ width:100%; border-collapse:collapse; }
+  .ledger thead th{
+    text-align:left;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    font-weight:700;
+    padding:0 6px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  .ledger tbody td{
+    padding:13px 6px;
+    border-bottom:1px solid var(--line);
+    font-size:15px;
+    vertical-align:top;
+  }
+  .ledger tbody tr:last-child td{ border-bottom:none; }
+  .ledger .date-cell{ color:var(--muted); font-size:13.5px; white-space:nowrap; }
+  .ledger .cat-cell{ color:var(--muted); font-size:13px; white-space:nowrap; }
+  .ledger .num{
+    font-family:'IBM Plex Mono', monospace;
+    text-align:right;
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .ledger .in{ color:var(--income); }
+  .ledger .out{ color:var(--expense); }
+  .parcel-tag{ color:var(--muted); font-size:12.5px; margin-left:6px; }
+  .group-tag{ color:var(--muted); font-size:12px; margin-left:6px; }
+  .del-btn{
+    background:none; border:none; cursor:pointer;
+    color:var(--muted); font-size:15px;
+    padding:2px 4px;
+  }
+  .del-btn:hover{ color:var(--expense); }
+
+  /* form */
+  .entry-form{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:26px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .form-row{ display:flex; gap:20px; flex-wrap:wrap; align-items:end; }
+  .form-row .field{ flex:1; min-width:130px; }
+  .form-row .field.grow{ flex:2; min-width:190px; }
+  .field label{
+    display:block;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--muted);
+    font-weight:700;
+    margin-bottom:8px;
+  }
+  .field input, .field select{
+    width:100%;
+    font:inherit;
+    font-size:15.5px;
+    padding:7px 2px 10px;
+    border:none;
+    border-bottom:1px solid var(--line);
+    border-radius:0;
+    background:transparent;
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--ink); }
+
+  .toggle-group{ display:flex; gap:6px; }
+  .toggle-group button{
+    flex:1;
+    padding:9px 8px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--ink-70);
+    font-size:13px;
+    cursor:pointer;
+    border-radius:6px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .toggle-group button.active{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+
+  .checkbox-field{ display:flex; align-items:center; flex:0 0 auto; min-width:170px; }
+  .checkbox-label{
+    display:flex; align-items:center; gap:8px;
+    font-size:14px; color:var(--ink-70);
+    cursor:pointer; user-select:none;
+  }
+  .checkbox-label input{ width:16px; height:16px; accent-color:var(--ink); cursor:pointer; }
+
+  .submit-field{ flex:0 0 auto; }
+  .submit-btn{
+    padding:11px 24px;
+    background:var(--ink);
+    color:var(--bg);
+    border:none;
+    border-radius:6px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+    white-space:nowrap;
+  }
+  .submit-btn:hover{ opacity:.85; }
+
+  .backup-row{
+    display:flex;
+    gap:18px;
+    align-items:center;
+    font-size:13.5px;
+  }
+  .ghost-btn{
+    background:none;
+    border:none;
+    color:var(--muted);
+    padding:0;
+    cursor:pointer;
+    font-size:13.5px;
+    font-family:'Inter',sans-serif;
+    text-decoration:underline;
+    text-underline-offset:2px;
+  }
+  .ghost-btn:hover{ color:var(--ink); }
+  #importFile{ display:none; }
+
+  @media (max-width:600px){
+    .wrap{ padding:36px 18px 72px; }
+    .hero-stats{ gap:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Balancete</div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="hero">
+    <div class="hero-label">Saldo</div>
+    <div class="hero-value" id="stampValue">R$ 0,00</div>
+    <div class="hero-stats">
+      <div class="hero-stat in">
+        <div class="k">Entradas</div>
+        <div class="v" id="tileIn">R$ 0,00</div>
+      </div>
+      <div class="hero-stat out">
+        <div class="k">Saídas</div>
+        <div class="v" id="tileOut">R$ 0,00</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Novo lançamento</div>
+    <form class="entry-form" id="entryForm">
+      <div class="form-row">
+        <div class="field grow">
+          <label>Descrição</label>
+          <input type="text" id="fDesc" placeholder="Ex: Mercado, salário..." required>
+        </div>
+        <div class="field">
+          <label id="amountLabel">Valor (R$)</label>
+          <input type="number" id="fAmount" step="0.01" min="0.01" placeholder="0,00" required>
+        </div>
+        <div class="field">
+          <label>Categoria</label>
+          <select id="fCategory"></select>
+        </div>
+        <div class="field">
+          <label>Data</label>
+          <input type="date" id="fDate" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="checkbox-field">
+          <label class="checkbox-label">
+            <input type="checkbox" id="fInstallment">
+            Compra parcelada
+          </label>
+        </div>
+        <div class="field" id="installmentsWrap" style="display:none;">
+          <label>Nº de parcelas</label>
+          <input type="number" id="fInstallments" min="2" max="60" value="2">
+        </div>
+        <div class="field" style="min-width:220px;">
+          <label>Quinzena</label>
+          <div class="toggle-group" id="groupToggle">
+            <button type="button" data-group="" class="active">Nenhuma</button>
+            <button type="button" data-group="5">5º dia útil</button>
+            <button type="button" data-group="20">Dia 20</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Tipo</label>
+          <div class="toggle-group" id="typeToggle">
+            <button type="button" data-type="out" class="active">Saída</button>
+            <button type="button" data-type="in">Entrada</button>
+          </div>
+        </div>
+        <div class="submit-field">
+          <button type="submit" class="submit-btn">Lançar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Despesas por categoria</div>
+    <div id="chart"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Lançamentos</div>
+    <div id="ledgerContainer"></div>
+  </div>
+
+  <div class="section" style="border-bottom:none; padding-bottom:0;">
+    <div class="backup-row">
+      <button class="ghost-btn" id="exportBtn">Exportar backup (.json)</button>
+      <button class="ghost-btn" id="importBtn">Importar backup</button>
+      <input type="file" id="importFile" accept="application/json">
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'balancete:transactions';
+  const DEFAULT_CATEGORIES = ['Alimentação','Transporte','Moradia','Lazer','Saúde','Educação','Salário','Outros'];
+  const SPLIT_DAY = 20;
+
+  let transactions = loadData();
+  let selectedMonth = 'all';
+
+  const brl = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' });
+
+  function loadData(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){
+      console.error('Erro ao carregar dados', e);
+      return [];
+    }
+  }
+
+  function saveData(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+  }
+
+  function monthKey(dateStr){ return dateStr.slice(0,7); }
+
+  function monthLabel(key){
+    if(key === 'all') return 'Todos';
+    const [y,m] = key.split('-');
+    const d = new Date(Number(y), Number(m)-1, 1);
+    return d.toLocaleDateString('pt-BR', { month:'short', year:'2-digit' }).replace('.','');
+  }
+
+  function addMonths(dateStr, months){
+    const [y,m,d] = dateStr.split('-').map(Number);
+    const target = new Date(y, (m-1) + months, 1);
+    const lastDay = new Date(target.getFullYear(), target.getMonth()+1, 0).getDate();
+    const day = Math.min(d, lastDay);
+    const yyyy = target.getFullYear();
+    const mm = String(target.getMonth()+1).padStart(2,'0');
+    const dd = String(day).padStart(2,'0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function nthBusinessDay(year, monthIndex, n){
+    const daysInMonth = new Date(year, monthIndex+1, 0).getDate();
+    let count = 0;
+    for(let d=1; d<=daysInMonth; d++){
+      const weekday = new Date(year, monthIndex, d).getDay();
+      if(weekday !== 0 && weekday !== 6){
+        count++;
+        if(count === n) return d;
+      }
+    }
+    return daysInMonth;
+  }
+
+  function formatDDMM(day, monthIndex){
+    return `${String(day).padStart(2,'0')}/${String(monthIndex+1).padStart(2,'0')}`;
+  }
+
+  function populateCategorySelect(){
+    const sel = document.getElementById('fCategory');
+    sel.innerHTML = '';
+    DEFAULT_CATEGORIES.forEach(cat=>{
+      const opt = document.createElement('option');
+      opt.value = cat; opt.textContent = cat;
+      sel.appendChild(opt);
+    });
+  }
+
+  function renderTabs(){
+    const currentMonth = new Date().toISOString().slice(0,7);
+    const keysSet = new Set(transactions.map(t=>monthKey(t.date)));
+    keysSet.add(currentMonth);
+    const keys = Array.from(keysSet).sort().reverse(); // ordem decrescente (mais novo primeiro)
+    const allKeys = ['all', ...keys];
+
+    const wrap = document.getElementById('tabs');
+    wrap.innerHTML = '';
+    allKeys.forEach(k=>{
+      const b = document.createElement('div');
+      b.className = 'tab' + (k===selectedMonth ? ' active' : '');
+      b.textContent = monthLabel(k);
+      b.addEventListener('click', ()=>{ selectedMonth = k; renderAll(); });
+      wrap.appendChild(b);
+    });
+  }
+
+  function filteredTransactions(){
+    if(selectedMonth === 'all') return transactions;
+    return transactions.filter(t=>monthKey(t.date) === selectedMonth);
+  }
+
+  function renderSummary(list){
+    const income = list.filter(t=>t.type==='in').reduce((s,t)=>s+t.amount,0);
+    const expense = list.filter(t=>t.type==='out').reduce((s,t)=>s+t.amount,0);
+    const balance = income - expense;
+
+    document.getElementById('tileIn').textContent = brl.format(income);
+    document.getElementById('tileOut').textContent = brl.format(expense);
+
+    const heroValue = document.getElementById('stampValue');
+    heroValue.classList.toggle('pos', balance >= 0);
+    heroValue.classList.toggle('neg', balance < 0);
+    heroValue.textContent = brl.format(balance);
+  }
+
+  function renderChart(list){
+    const totals = {};
+    list.filter(t=>t.type==='out').forEach(t=>{
+      totals[t.category] = (totals[t.category]||0) + t.amount;
+    });
+    const entries = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+    const chart = document.getElementById('chart');
+    chart.innerHTML = '';
+    if(entries.length === 0){
+      chart.innerHTML = '<div class="empty-note">Nenhuma despesa registrada neste período.</div>';
+      return;
+    }
+    const max = entries[0][1];
+    entries.forEach(([cat, val])=>{
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      row.innerHTML = `
+        <div class="cat">${cat}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(val/max*100).toFixed(1)}%"></div></div>
+        <div class="amt">${brl.format(val)}</div>
+      `;
+      chart.appendChild(row);
+    });
+  }
+
+  function ledgerRowsHtml(rows, showGroupTag){
+    return rows.map(t=>{
+      const [y,m,d] = t.date.split('-');
+      const parcelTag = t.installmentTotal ? `<span class="parcel-tag">${t.installmentIndex}/${t.installmentTotal}</span>` : '';
+      const groupTag = (showGroupTag && (t.payGroup === '5' || t.payGroup === '20'))
+        ? `<span class="group-tag">· ${t.payGroup === '5' ? '5º dia útil' : 'Dia 20'}</span>` : '';
+      return `
+        <tr>
+          <td class="date-cell">${d}/${m}/${y.slice(2)}</td>
+          <td>${escapeHtml(t.description)}${parcelTag}${groupTag}</td>
+          <td class="cat-cell">${escapeHtml(t.category)}</td>
+          <td class="num ${t.type}">${t.type==='in' ? '+' : '−'} ${brl.format(t.amount)}</td>
+          <td><button class="del-btn" data-id="${t.id}" title="Excluir">✕</button></td>
+        </tr>`;
+    }).join('');
+  }
+
+  function buildLedgerTable(rows, showGroupTag){
+    if(rows.length === 0){
+      return `<div class="empty-note" style="padding:6px 0;">Nenhum lançamento neste período.</div>`;
+    }
+    return `
+      <table class="ledger">
+        <thead>
+          <tr>
+            <th>Data</th><th>Descrição</th><th>Categoria</th>
+            <th style="text-align:right;">Valor</th><th></th>
+          </tr>
+        </thead>
+        <tbody>${ledgerRowsHtml(rows, showGroupTag)}</tbody>
+      </table>`;
+  }
+
+  function periodBalanceHtml(rows){
+    const income = rows.filter(t=>t.type==='in').reduce((s,t)=>s+t.amount,0);
+    const expense = rows.filter(t=>t.type==='out').reduce((s,t)=>s+t.amount,0);
+    const bal = income - expense;
+    const cls = bal >= 0 ? 'pos' : 'neg';
+    return `<span class="pbalance ${cls}">${brl.format(bal)}</span>`;
+  }
+
+  function renderLedger(list){
+    const container = document.getElementById('ledgerContainer');
+
+    if(selectedMonth === 'all'){
+      const sorted = [...list].sort((a,b)=> b.date.localeCompare(a.date));
+      container.innerHTML = buildLedgerTable(sorted, true);
+      bindDeleteButtons(container);
+      return;
+    }
+
+    const [yStr, mStr] = selectedMonth.split('-');
+    const year = Number(yStr);
+    const monthIndex = Number(mStr) - 1;
+    const fifthDay = nthBusinessDay(year, monthIndex, 5);
+    const fifthLabel = formatDDMM(fifthDay, monthIndex);
+    const twentiethLabel = formatDDMM(SPLIT_DAY, monthIndex);
+
+    const group5 = list.filter(t=> t.payGroup === '5').sort((a,b)=> b.date.localeCompare(a.date));
+    const group20 = list.filter(t=> t.payGroup === '20').sort((a,b)=> b.date.localeCompare(a.date));
+    const groupNone = list.filter(t=> !t.payGroup).sort((a,b)=> b.date.localeCompare(a.date));
+
+    let html = `
+      <div class="period-block">
+        <div class="period-header">
+          <div><span class="ptitle">5º dia útil</span><span class="pdate">${fifthLabel}</span></div>
+          ${periodBalanceHtml(group5)}
+        </div>
+        ${buildLedgerTable(group5, false)}
+      </div>
+      <div class="period-block">
+        <div class="period-header">
+          <div><span class="ptitle">Dia 20</span><span class="pdate">${twentiethLabel}</span></div>
+          ${periodBalanceHtml(group20)}
+        </div>
+        ${buildLedgerTable(group20, false)}
+      </div>
+    `;
+
+    if(groupNone.length > 0){
+      html += `
+        <div class="period-block">
+          <div class="period-header">
+            <div><span class="ptitle">Sem quinzena definida</span></div>
+            ${periodBalanceHtml(groupNone)}
+          </div>
+          ${buildLedgerTable(groupNone, false)}
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
+    bindDeleteButtons(container);
+  }
+
+  function bindDeleteButtons(container){
+    container.querySelectorAll('.del-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> handleDelete(btn.dataset.id));
+    });
+  }
+
+  function handleDelete(id){
+    const t = transactions.find(tx=>tx.id === id);
+    if(!t) return;
+
+    if(t.installmentGroup){
+      const futureSameGroup = transactions.filter(tx=>
+        tx.installmentGroup === t.installmentGroup && tx.installmentIndex >= t.installmentIndex
+      );
+      if(futureSameGroup.length > 1){
+        const wantsAll = window.confirm(
+          `Esta é a parcela ${t.installmentIndex} de ${t.installmentTotal} de "${t.description}".\n\n` +
+          `Clique OK para excluir esta e todas as parcelas futuras dessa compra.\n` +
+          `Clique Cancelar para excluir apenas esta parcela.`
+        );
+        if(wantsAll){
+          const idsToRemove = new Set(futureSameGroup.map(tx=>tx.id));
+          transactions = transactions.filter(tx=>!idsToRemove.has(tx.id));
+        }else{
+          transactions = transactions.filter(tx=>tx.id !== id);
+        }
+        saveData();
+        renderAll();
+        return;
+      }
+    }
+
+    transactions = transactions.filter(tx=>tx.id !== id);
+    saveData();
+    renderAll();
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderAll(){
+    renderTabs();
+    const list = filteredTransactions();
+    renderSummary(list);
+    renderChart(list);
+    renderLedger(list);
+  }
+
+  // toggles
+  const typeButtons = document.querySelectorAll('#typeToggle button');
+  let currentType = 'out';
+  typeButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      typeButtons.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentType = btn.dataset.type;
+    });
+  });
+
+  let currentGroup = '';
+  const groupButtons = document.querySelectorAll('#groupToggle button');
+  groupButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      groupButtons.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentGroup = btn.dataset.group;
+    });
+  });
+
+  const installmentCheckbox = document.getElementById('fInstallment');
+  const installmentsWrap = document.getElementById('installmentsWrap');
+  const amountLabel = document.getElementById('amountLabel');
+  installmentCheckbox.addEventListener('change', ()=>{
+    const on = installmentCheckbox.checked;
+    installmentsWrap.style.display = on ? '' : 'none';
+    amountLabel.textContent = on ? 'Valor da parcela (R$)' : 'Valor (R$)';
+  });
+
+  function newId(){
+    return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random());
+  }
+
+  document.getElementById('entryForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const desc = document.getElementById('fDesc').value.trim();
+    const amount = parseFloat(document.getElementById('fAmount').value);
+    const category = document.getElementById('fCategory').value;
+    const date = document.getElementById('fDate').value;
+    const isInstallment = installmentCheckbox.checked;
+    const installmentsCount = Math.max(2, Math.min(60, parseInt(document.getElementById('fInstallments').value, 10) || 2));
+
+    if(!desc || !amount || amount <= 0 || !date) return;
+
+    if(isInstallment){
+      const groupId = newId();
+      for(let i=0; i<installmentsCount; i++){
+        transactions.push({
+          id: newId(),
+          description: desc,
+          amount: Math.round(amount*100)/100,
+          category,
+          date: addMonths(date, i),
+          type: currentType,
+          payGroup: currentGroup || null,
+          installmentGroup: groupId,
+          installmentIndex: i+1,
+          installmentTotal: installmentsCount
+        });
+      }
+    }else{
+      transactions.push({
+        id: newId(),
+        description: desc,
+        amount: Math.round(amount*100)/100,
+        category,
+        date,
+        type: currentType,
+        payGroup: currentGroup || null
+      });
+    }
+
+    saveData();
+    e.target.reset();
+    document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
+    typeButtons.forEach(b=>b.classList.remove('active'));
+    document.querySelector('#typeToggle button[data-type="out"]').classList.add('active');
+    currentType = 'out';
+    groupButtons.forEach(b=>b.classList.remove('active'));
+    document.querySelector('#groupToggle button[data-group=""]').classList.add('active');
+    currentGroup = '';
+    installmentsWrap.style.display = 'none';
+    amountLabel.textContent = 'Valor (R$)';
+    document.getElementById('fInstallments').value = 2;
+    renderAll();
+  });
+
+  // backup
+  document.getElementById('exportBtn').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(transactions, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `balancete-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('importBtn').addEventListener('click', ()=>{
+    document.getElementById('importFile').click();
+  });
+
+  document.getElementById('importFile').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev)=>{
+      try{
+        const data = JSON.parse(ev.target.result);
+        if(Array.isArray(data)){
+          transactions = data;
+          saveData();
+          renderAll();
+        }else{
+          alert('Arquivo de backup inválido.');
+        }
+      }catch(err){
+        alert('Não foi possível ler o arquivo de backup.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // init
+  populateCategorySelect();
+  document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
+  renderAll();
+})();
+</script>
+</body>
+</html>
