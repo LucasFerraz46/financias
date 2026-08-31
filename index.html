@@ -9,20 +9,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#FFFFFF;
-    --ink:#0A0A0B;
-    --ink-70:#4B4B4E;
-    --muted:#9B9BA1;
-    --line:#E9E9EC;
-    --income:#137A47;
-    --expense:#C0362C;
+    --bg:#0B0B0D;
+    --ink:#F4F4F6;
+    --ink-70:#C7C7CC;
+    --muted:#8B8B92;
+    --line:#28282D;
+    --income:#34D399;
+    --expense:#F87171;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
+  html{ color-scheme:dark; }
   body{
     background:var(--bg);
     color:var(--ink);
     font-family:'Inter',sans-serif;
+    font-size:16px;
     -webkit-font-smoothing:antialiased;
   }
   ::selection{background:var(--ink); color:#fff;}
@@ -35,7 +37,7 @@
 
   /* header */
   .brand{
-    font-size:13px;
+    font-size:15px;
     font-weight:800;
     letter-spacing:.02em;
     text-transform:uppercase;
@@ -54,7 +56,7 @@
   .tabs::-webkit-scrollbar{ display:none; }
   .tab{
     padding:0 0 12px;
-    font-size:13px;
+    font-size:14.5px;
     font-weight:600;
     color:var(--muted);
     cursor:pointer;
@@ -75,7 +77,7 @@
     margin-bottom:6px;
   }
   .hero-value{
-    font-size:clamp(38px,7vw,58px);
+    font-size:clamp(44px,8vw,66px);
     font-weight:800;
     letter-spacing:-.02em;
     font-variant-numeric:tabular-nums;
@@ -89,7 +91,7 @@
     margin-top:20px;
   }
   .hero-stat .k{
-    font-size:11px;
+    font-size:12px;
     text-transform:uppercase;
     letter-spacing:.06em;
     color:var(--muted);
@@ -98,7 +100,7 @@
   }
   .hero-stat .v{
     font-family:'IBM Plex Mono', monospace;
-    font-size:16px;
+    font-size:18px;
     font-weight:600;
     font-variant-numeric:tabular-nums;
   }
@@ -109,14 +111,14 @@
   .section{ padding:36px 0; border-bottom:1px solid var(--line); }
   .section:last-of-type{ border-bottom:none; }
   .section-title{
-    font-size:11px;
+    font-size:12px;
     text-transform:uppercase;
     letter-spacing:.08em;
     color:var(--muted);
     font-weight:700;
     margin-bottom:18px;
   }
-  .empty-note{ color:var(--muted); font-size:13px; }
+  .empty-note{ color:var(--muted); font-size:14px; }
 
   /* category bars */
   .bar-row{
@@ -128,18 +130,18 @@
   .bar-row .cat{
     width:118px;
     flex-shrink:0;
-    font-size:13px;
+    font-size:14px;
     color:var(--ink-70);
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
   }
   .bar-track{ flex:1; height:3px; background:var(--line); border-radius:2px; }
-  .bar-fill{ height:100%; background:var(--expense); border-radius:2px; opacity:.75; }
+  .bar-fill{ height:100%; background:var(--expense); border-radius:2px; opacity:.85; }
   .bar-row .amt{
     font-family:'IBM Plex Mono', monospace;
-    font-size:12.5px;
-    width:88px;
+    font-size:13.5px;
+    width:92px;
     text-align:right;
     color:var(--ink-70);
     font-variant-numeric:tabular-nums;
@@ -156,9 +158,9 @@
     padding-bottom:10px;
     margin-bottom:4px;
   }
-  .period-header .ptitle{ font-size:14px; font-weight:700; margin-right:8px; }
-  .period-header .pdate{ font-size:11.5px; color:var(--muted); font-family:'IBM Plex Mono', monospace; }
-  .pbalance{ font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .period-header .ptitle{ font-size:15.5px; font-weight:700; margin-right:8px; }
+  .period-header .pdate{ font-size:12.5px; color:var(--muted); font-family:'IBM Plex Mono', monospace; }
+  .pbalance{ font-family:'IBM Plex Mono', monospace; font-size:14.5px; font-weight:600; font-variant-numeric:tabular-nums; }
   .pbalance.pos{ color:var(--income); }
   .pbalance.neg{ color:var(--expense); }
 
@@ -166,7 +168,7 @@
   .ledger{ width:100%; border-collapse:collapse; }
   .ledger thead th{
     text-align:left;
-    font-size:10.5px;
+    font-size:11.5px;
     text-transform:uppercase;
     letter-spacing:.06em;
     color:var(--muted);
@@ -175,14 +177,14 @@
     border-bottom:1px solid var(--line);
   }
   .ledger tbody td{
-    padding:11px 6px;
+    padding:13px 6px;
     border-bottom:1px solid var(--line);
-    font-size:13.5px;
+    font-size:15px;
     vertical-align:top;
   }
   .ledger tbody tr:last-child td{ border-bottom:none; }
-  .ledger .date-cell{ color:var(--muted); font-size:12.5px; white-space:nowrap; }
-  .ledger .cat-cell{ color:var(--muted); font-size:12px; white-space:nowrap; }
+  .ledger .date-cell{ color:var(--muted); font-size:13.5px; white-space:nowrap; }
+  .ledger .cat-cell{ color:var(--muted); font-size:13px; white-space:nowrap; }
   .ledger .num{
     font-family:'IBM Plex Mono', monospace;
     text-align:right;
@@ -191,11 +193,11 @@
   }
   .ledger .in{ color:var(--income); }
   .ledger .out{ color:var(--expense); }
-  .parcel-tag{ color:var(--muted); font-size:11.5px; margin-left:6px; }
-  .group-tag{ color:var(--muted); font-size:11px; margin-left:6px; }
+  .parcel-tag{ color:var(--muted); font-size:12.5px; margin-left:6px; }
+  .group-tag{ color:var(--muted); font-size:12px; margin-left:6px; }
   .del-btn{
     background:none; border:none; cursor:pointer;
-    color:var(--muted); font-size:14px;
+    color:var(--muted); font-size:15px;
     padding:2px 4px;
   }
   .del-btn:hover{ color:var(--expense); }
@@ -214,7 +216,7 @@
   .form-row .field.grow{ flex:2; min-width:190px; }
   .field label{
     display:block;
-    font-size:10.5px;
+    font-size:11.5px;
     text-transform:uppercase;
     letter-spacing:.06em;
     color:var(--muted);
@@ -224,8 +226,8 @@
   .field input, .field select{
     width:100%;
     font:inherit;
-    font-size:14px;
-    padding:6px 2px 9px;
+    font-size:15.5px;
+    padding:7px 2px 10px;
     border:none;
     border-bottom:1px solid var(--line);
     border-radius:0;
@@ -238,47 +240,47 @@
   .toggle-group{ display:flex; gap:6px; }
   .toggle-group button{
     flex:1;
-    padding:8px 8px;
+    padding:9px 8px;
     border:1px solid var(--line);
-    background:#fff;
+    background:transparent;
     color:var(--ink-70);
-    font-size:12px;
+    font-size:13px;
     cursor:pointer;
     border-radius:6px;
     font-family:'Inter', sans-serif;
     font-weight:600;
     white-space:nowrap;
   }
-  .toggle-group button.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .toggle-group button.active{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
 
-  .checkbox-field{ display:flex; align-items:center; flex:0 0 auto; min-width:160px; }
+  .checkbox-field{ display:flex; align-items:center; flex:0 0 auto; min-width:170px; }
   .checkbox-label{
     display:flex; align-items:center; gap:8px;
-    font-size:13px; color:var(--ink-70);
+    font-size:14px; color:var(--ink-70);
     cursor:pointer; user-select:none;
   }
-  .checkbox-label input{ width:15px; height:15px; accent-color:var(--ink); cursor:pointer; }
+  .checkbox-label input{ width:16px; height:16px; accent-color:var(--ink); cursor:pointer; }
 
   .submit-field{ flex:0 0 auto; }
   .submit-btn{
-    padding:10px 22px;
+    padding:11px 24px;
     background:var(--ink);
-    color:#fff;
+    color:var(--bg);
     border:none;
     border-radius:6px;
     font-weight:700;
-    font-size:13px;
+    font-size:14px;
     cursor:pointer;
     font-family:'Inter',sans-serif;
     white-space:nowrap;
   }
-  .submit-btn:hover{ background:#000; }
+  .submit-btn:hover{ opacity:.85; }
 
   .backup-row{
     display:flex;
     gap:18px;
     align-items:center;
-    font-size:12.5px;
+    font-size:13.5px;
   }
   .ghost-btn{
     background:none;
@@ -286,7 +288,7 @@
     color:var(--muted);
     padding:0;
     cursor:pointer;
-    font-size:12.5px;
+    font-size:13.5px;
     font-family:'Inter',sans-serif;
     text-decoration:underline;
     text-underline-offset:2px;
