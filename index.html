@@ -472,7 +472,7 @@
     const currentMonth = new Date().toISOString().slice(0,7);
     const keysSet = new Set(transactions.map(t=>monthKey(t.date)));
     keysSet.add(currentMonth);
-    const keys = Array.from(keysSet).sort(); // ordem crescente (mais antigo primeiro)
+    const keys = Array.from(keysSet).sort().reverse(); // ordem decrescente (mais novo primeiro)
     const allKeys = ['all', ...keys];
 
     const wrap = document.getElementById('tabs');
