@@ -469,9 +469,10 @@
   }
 
   function renderTabs(){
-    const keys = Array.from(new Set(transactions.map(t=>monthKey(t.date)))).sort().reverse();
     const currentMonth = new Date().toISOString().slice(0,7);
-    if(!keys.includes(currentMonth)) keys.unshift(currentMonth);
+    const keysSet = new Set(transactions.map(t=>monthKey(t.date)));
+    keysSet.add(currentMonth);
+    const keys = Array.from(keysSet).sort(); // ordem crescente (mais antigo primeiro)
     const allKeys = ['all', ...keys];
 
     const wrap = document.getElementById('tabs');
